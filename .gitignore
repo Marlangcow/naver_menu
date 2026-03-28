@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+pyvenv.cfg
+.python-version
+
+# Build / Distribution
+build/
+dist/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment variables
+.env
+.flaskenv
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.local-browsers/
+
+# Streamlit
+.streamlit/
+
+# Desktop App (Local only)
+main.py

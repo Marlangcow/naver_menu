@@ -11,6 +11,12 @@ import pandas as pd
 from streamlit_paste_button import paste_image_button
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
+# Playwright 브라우저 설치 (Streamlit Cloud 포함 모든 환경)
+import os, subprocess, sys
+if "playwright_installed" not in st.session_state:
+    os.system("playwright install chromium")
+    st.session_state.playwright_installed = True
+
 # Playwright 사용 가능 여부 확인
 PLAYWRIGHT_AVAILABLE = False
 try:

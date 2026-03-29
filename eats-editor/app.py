@@ -12,15 +12,10 @@ from streamlit_paste_button import paste_image_button
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 # Playwright 브라우저 설치 (Streamlit Cloud 포함 모든 환경)
-import subprocess, sys
+import os, subprocess, sys
 if "playwright_installed" not in st.session_state:
-    try:
-        subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], 
-                       capture_output=True, timeout=120)
-        st.session_state.playwright_installed = True
-    except Exception as e:
-        st.session_state.playwright_installed = False
-        print(f"Playwright install failed: {e}")
+    os.system("playwright install chromium")
+    st.session_state.playwright_installed = True
 
 # Playwright 사용 가능 여부 확인
 PLAYWRIGHT_AVAILABLE = False
@@ -58,7 +53,7 @@ with st.sidebar:
     
     selected_model = st.selectbox(
         "모델 선택",
-        ["gemini-1.5-flash", "gemini-2.0-flash-exp", "직접 입력"],
+        ["gemini-2.5-flash-preview-05-20", "gemini-1.5-flash", "직접 입력"],
         index=0
     )
     if selected_model == "직접 입력":
@@ -73,59 +68,41 @@ if env_api_key:
 # 2. 네이버 메뉴 스크래핑 (Playwright 동기 방식)
 # ==========================================
 def scrape_naver_menu_images(url):
-    """Playwright(동기)를 사용하여 네이버 플레이스 메뉴 이미지 추출 (최신 셀렉터 대응)"""
-    # 1. URL 정규화 (카페, 식당 등 모든 카테고리 대응)
+    """Playwright(동기)를 사용하여 네이버 플레이스 메뉴 이미지 추출"""
     place_id_match = re.search(r'place/(\d+)', url) or re.search(r'restaurant/(\d+)', url)
-    if not place_id_match:
-        # 이미 restaurant/id/menu/list 형태면 그대로 사용
-        if 'pcmap.place.naver.com' in url:
-            target_url = url
-        else:
-            return []
+    if place_id_match:
+        target_url = f"https://pcmap.place.naver.com/restaurant/{place_id_match.group(1)}/menu/list"
     else:
-        pid = place_id_match.group(1)
-        target_url = f"https://pcmap.place.naver.com/restaurant/{pid}/menu/list"
+        target_url = url
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        # 실제 사용자처럼 보이게 하기 위해 User-Agent 설정
         context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            viewport={'width': 1280, 'height': 800}
+            user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15"
         )
         page = context.new_page()
         try:
-            page.goto(target_url, wait_until="networkidle", timeout=30000)
+            page.goto(target_url, wait_until="domcontentloaded", timeout=30000)
             
-            # 2. 동적 로딩(Lazy Loading) 대응을 위한 스크롤
-            # 충분히 스크롤하여 모든 이미지가 로드되게 함
-            for _ in range(3):
-                page.evaluate("window.scrollBy(0, 1000)")
-                page.wait_for_timeout(1000)
-            
-            # 3. 최신 셀렉터 기반 이미지 추출
-            # a.xPf1B: 각 메뉴 아이템 영역
-            # .K09Sj img: 메뉴 아이템 내 이미지
-            # .place_section_content img: 일반적인 메뉴 이미지
-            selectors = ["a.xPf1B img", ".K09Sj img", ".place_section_content img", ".menu_list img", "._3y_Yt img"]
-            
-            srcs = []
-            for selector in selectors:
+            for selector in [".place_section_content", ".menu_list", "._3y_Yt"]:
                 try:
-                    imgs = page.query_selector_all(selector)
-                    for img in imgs:
-                        src = img.get_attribute("src")
-                        if src and ("pstatic.net" in src or "naver.com" in src):
-                            # 고해상도 이미지 요청을 위해 타입 파라미터가 있다면 제거하거나 조정 (옵션)
-                            srcs.append(src)
+                    page.wait_for_selector(selector, timeout=5000)
+                    break
                 except:
                     continue
             
-            # 중복 제거 및 반환
-            final_srcs = list(dict.fromkeys(srcs))
-            return final_srcs
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight/2)")
+            page.wait_for_timeout(1500)
+            
+            images = page.query_selector_all("img")
+            srcs = []
+            for img in images:
+                src = img.get_attribute("src")
+                if src and ("pstatic.net" in src or "naver.com" in src):
+                    srcs.append(src)
+            return list(dict.fromkeys(srcs))
         except Exception as e:
-            print(f"Scraping error: {e}")
+            st.error(f"스크래핑 오류: {e}")
             return []
         finally:
             browser.close()

@@ -1,43 +1,58 @@
-# Python
+
 __pycache__/
-*.py[cod]
-*$py.class
-.venv/
-venv/
-ENV/
-env/
-pyvenv.cfg
-.python-version
-
-# Build / Distribution
-build/
-dist/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Environment variables
+!.vscode/extensions.json
+.DS_Store
 .env
 .flaskenv
-
-# IDE / Editor
-.vscode/
+.idea
 .idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Playwright
-test-results/
-playwright-report/
-blob-report/
-playwright/.local-browsers/
-
-# Streamlit
+.installed.cfg
+.python-version
 .streamlit/
-
+.venv/
+.vscode/
+.vscode/*
+*.egg
+*.egg-info/
+*.local
+*.log
+*.njsproj
+*.ntvs*
+*.py[cod]
+*.sln
+*.suo
+*.sw?
+*.swo
+*.swp
+*$py.class
+# Build / Distribution
 # Desktop App (Local only)
+# Editor directories and files
+# Environment variables
+# IDE / Editor
+# Logs
+# OS
+# Playwright
+# Python
+# Streamlit
+blob-report/
+build/
+dist
+dist-ssr
+dist/
+env/
+ENV/
+lerna-debug.log*
+logs
 main.py
+node_modules
+npm-debug.log*
+playwright-report/
+playwright/.local-browsers/
+pnpm-debug.log*
+pyvenv.cfg
+test-results/
+Thumbs.db
+venv/
+yarn-debug.log*
+yarn-error.log*
